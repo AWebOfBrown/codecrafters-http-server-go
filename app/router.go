@@ -32,7 +32,7 @@ func router(req *Request, res *Response) {
 		res.Status = 200
 		res.Message = "OK"
 		res.Headers = map[string]string{
-			"Content-Type":   "text-plain",
+			"Content-Type":   "text/plain",
 			"Content-Length": strconv.Itoa(len(userAgent)),
 		}
 		res.Body = []byte(userAgent)
