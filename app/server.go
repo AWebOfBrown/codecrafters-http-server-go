@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net"
 	"os"
+	"strconv"
 	"strings"
 )
 
@@ -27,6 +28,7 @@ func main() {
 }
 
 func handleConn(conn net.Conn) {
+	defer conn.Close()
 	buff := bufio.NewReader(conn)
 	reqLine, err := buff.ReadString('\n')
 	if err != nil {
@@ -34,26 +36,57 @@ func handleConn(conn net.Conn) {
 		os.Exit(1)
 	}
 
-	fmt.Printf("req string: %q \n", reqLine)
+	// fmt.Printf("req string: %q \n", reqLine)
 
 	split := strings.Split(reqLine, " ")
 
 	addr := split[1]
-	fmt.Printf("addr: %q \n", addr)
 
-	var responseContent []byte
+	var response *Response
 	if addr == "/" {
-		responseContent = []byte("HTTP/1.1 200 OK\r\n\r\n")
+		response = &Response{
+			Status:  200,
+			Message: "OK",
+			Body:    nil,
+			Headers: map[string]string{
+				"Content-Type": "text/plain",
+			},
+		}
+	} else if strings.HasPrefix(addr, "/echo/") {
+		responseString := handleEcho(addr)
+		response = &Response{
+			Status:  200,
+			Message: "OK",
+			Headers: map[string]string{
+				"Content-Type":   "text/plain",
+				"Content-Length": strconv.Itoa(len(responseString)),
+			},
+			Body: []byte(responseString),
+		}
 	} else {
-		responseContent = []byte("HTTP/1.1 404 Not Found\r\n\r\n")
+		response = &Response{
+			Status:  404,
+			Message: "Not Found",
+			Headers: map[string]string{
+				"Content-Type": "text/plain",
+			},
+		}
 	}
 
-	fmt.Printf("responseContent: %q", responseContent)
+	serialisedResponse, err := response.Serialize()
+	fmt.Printf("response: %s", serialisedResponse)
 
-	n, err := conn.Write(responseContent)
 	if err != nil {
-		fmt.Printf("err: ", err)
+		fmt.Errorf("err: %q", err)
 	}
-	fmt.Printf("bytes: %d \n", n)
-	conn.Close()
+	_, err = conn.Write(serialisedResponse)
+
+	if err != nil {
+		fmt.Errorf("err: ", err)
+	}
+}
+
+func handleEcho(addr string) string {
+	splitAddr := strings.Split(addr, "/")
+	return splitAddr[2]
 }
