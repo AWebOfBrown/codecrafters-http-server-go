@@ -28,7 +28,7 @@ func router(req *Request, res *Response) {
 		}
 		res.Body = []byte(responseString)
 	} else if strings.HasPrefix(req.Path, "/user-agent") {
-		userAgent := strings.Trim(req.Headers["User-Agent"], "\r\n")
+		userAgent := strings.Trim(req.Headers["User-Agent"], "\r\n ")
 		res.Status = 200
 		res.Message = "OK"
 		res.Headers = map[string]string{
