@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"net"
 )
 
 type Response struct {
@@ -9,6 +10,8 @@ type Response struct {
 	Message string
 	Body    []byte
 	Headers map[string]string
+	c       net.Conn
+	sent    bool
 }
 
 func (r *Response) Serialize() ([]byte, error) {
@@ -36,4 +39,17 @@ func (r *Response) Serialize() ([]byte, error) {
 	fullResponse := append(lineOne, lineTwo...)
 	fullResponse = append(fullResponse, lineThree...)
 	return fullResponse, nil
+}
+
+func (r *Response) Send() {
+	serializedResponse, _ := r.Serialize()
+	r.c.Write(serializedResponse)
+	r.sent = true
+}
+
+func NewResponse(c net.Conn) *Response {
+	return &Response{
+		c:    c,
+		sent: false,
+	}
 }
