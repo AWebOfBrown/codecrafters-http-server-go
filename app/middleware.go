@@ -24,17 +24,16 @@ func (ms *MiddlewareStack) Use(m ...Middleware) *MiddlewareStack {
 
 func (ms *MiddlewareStack) Run() {
 	middlewareQty := len(ms.middlewares)
-	var next func(currentIndex int)
+	var runMiddleware func(middlewareListIndex int)
 
-	next = func(currentIndex int) {
-		if currentIndex == middlewareQty {
+	runMiddleware = func(middlewareListIndex int) {
+		if middlewareListIndex == middlewareQty {
 			return
 		}
-		middlewareToCall := ms.middlewares[currentIndex]
-		nextIndex := currentIndex + 1
+		middlewareToCall := ms.middlewares[middlewareListIndex]
 		middlewareToCall(ms.req, ms.res, func() {
-			next(nextIndex)
+			runMiddleware(middlewareListIndex + 1)
 		})
 	}
-	next(0)
+	runMiddleware(0)
 }

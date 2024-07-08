@@ -8,9 +8,7 @@ func router(req *Request, res *Response, next func()) {
 	if req.Path == "/" {
 		res.Status = 200
 		res.Message = "OK"
-		res.Headers = map[string]string{
-			"Content-Type": "text/plain",
-		}
+		res.Headers["Content-Type"] = "text/plain"
 	} else if strings.HasPrefix(req.Path, "/echo/") {
 		handle_echo(req, res)
 	} else if strings.HasPrefix(req.Path, "/user-agent") {
@@ -18,13 +16,9 @@ func router(req *Request, res *Response, next func()) {
 	} else if strings.HasPrefix(req.Path, "/files/") {
 		handle_files(req, res)
 	} else {
-		{
-			res.Status = 404
-			res.Message = "Not Found"
-			res.Headers = map[string]string{
-				"Content-Type": "text/plain",
-			}
-		}
+		res.Status = 404
+		res.Message = "Not Found"
+		res.Headers["Content-Type"] = "text/plain"
 	}
 	next()
 }

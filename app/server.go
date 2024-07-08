@@ -31,9 +31,8 @@ func main() {
 			req, _ := NewRequest(conn)
 			res := NewResponse(conn)
 			middleware_handler := NewMiddlewareStack(req, res)
-			middleware_handler.Use(compression_middleware, router)
+			middleware_handler.Use(compression_middleware, router, response_serializer)
 			middleware_handler.Run()
-			res.Send()
 		}(conn)
 	}
 }
