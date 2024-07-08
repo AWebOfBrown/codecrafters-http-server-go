@@ -30,7 +30,9 @@ func main() {
 			defer conn.Close()
 			req, _ := NewRequest(conn)
 			res := NewResponse(conn)
-			router(req, res)
+			middleware_handler := NewMiddlewareStack(req, res)
+			middleware_handler.Use(compression_middleware, router)
+			middleware_handler.Run()
 			res.Send()
 		}(conn)
 	}

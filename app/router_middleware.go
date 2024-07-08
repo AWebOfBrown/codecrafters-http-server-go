@@ -4,7 +4,7 @@ import (
 	"strings"
 )
 
-func router(req *Request, res *Response) {
+func router(req *Request, res *Response, next func()) {
 	if req.Path == "/" {
 		res.Status = 200
 		res.Message = "OK"
@@ -26,4 +26,5 @@ func router(req *Request, res *Response) {
 			}
 		}
 	}
+	next()
 }

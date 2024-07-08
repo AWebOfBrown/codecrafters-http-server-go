@@ -20,7 +20,7 @@ func TestWritingFile(t *testing.T) {
 		defer conn.Close()
 		req, _ := NewRequest(conn)
 		res := NewResponse(conn)
-		router(req, res)
+		router(req, res, func() {})
 		res.Send()
 	}(server)
 }
