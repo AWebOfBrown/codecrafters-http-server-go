@@ -14,36 +14,39 @@ type Response struct {
 	sent    bool
 }
 
-func (r *Response) serialize() ([]byte, error) {
+func (r *Response) serialiseHead() ([]byte, error) {
 	msgOrEmpty := ""
 	if r.Message != "" {
 		msgOrEmpty = fmt.Sprintf(" %s", r.Message)
 	}
-	lineOne := []byte(fmt.Sprintf("HTTP/1.1 %d%s\r\n", r.Status, msgOrEmpty))
+	head := []byte(fmt.Sprintf("HTTP/1.1 %d%s\r\n", r.Status, msgOrEmpty))
+	return head, nil
+}
 
-	headers := ""
+func (r *Response) serialiseHeaders() ([]byte, error) {
+	headersTemplate := ""
 	if r.Headers != nil {
 		for key, value := range r.Headers {
-			headers += fmt.Sprintf("%s: %s\r\n", key, value)
+			headersTemplate += fmt.Sprintf("%s: %s\r\n", key, value)
 		}
 	}
-	headers += "\r\n"
-	lineTwo := []byte(headers)
-
-	//Todo: handle content type
-	lineThree := r.Body
-	// if err != nil {
-	// 	return nil, err
-	// }
-
-	fullResponse := append(lineOne, lineTwo...)
-	fullResponse = append(fullResponse, lineThree...)
-	return fullResponse, nil
+	headersTemplate += "\r\n"
+	headers := []byte(headersTemplate)
+	return headers, nil
 }
 
 func (r *Response) Send() {
-	serializedResponse, _ := r.serialize()
-	r.c.Write(serializedResponse)
+	if r.sent {
+		e := fmt.Errorf("sending response body twice")
+		panic(e)
+	}
+	head, _ := r.serialiseHead()
+	headers, _ := r.serialiseHeaders()
+
+	serialisedResponse := append(head, headers...)
+	serialisedResponse = append(serialisedResponse, r.Body...)
+	bytes, _ := r.c.Write(serialisedResponse)
+	fmt.Printf("bytes: %d", bytes)
 	r.sent = true
 }
 
