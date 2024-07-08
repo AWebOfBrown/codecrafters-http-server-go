@@ -14,7 +14,7 @@ type Response struct {
 	sent    bool
 }
 
-func (r *Response) Serialize() ([]byte, error) {
+func (r *Response) serialize() ([]byte, error) {
 	msgOrEmpty := ""
 	if r.Message != "" {
 		msgOrEmpty = fmt.Sprintf(" %s", r.Message)
@@ -42,14 +42,15 @@ func (r *Response) Serialize() ([]byte, error) {
 }
 
 func (r *Response) Send() {
-	serializedResponse, _ := r.Serialize()
+	serializedResponse, _ := r.serialize()
 	r.c.Write(serializedResponse)
 	r.sent = true
 }
 
 func NewResponse(c net.Conn) *Response {
 	return &Response{
-		c:    c,
-		sent: false,
+		c:       c,
+		sent:    false,
+		Headers: map[string]string{},
 	}
 }

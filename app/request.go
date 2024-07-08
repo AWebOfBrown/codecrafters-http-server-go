@@ -3,7 +3,9 @@ package main
 import (
 	"bufio"
 	"fmt"
+	"io"
 	"net"
+	"strconv"
 	"strings"
 )
 
@@ -22,7 +24,7 @@ func NewRequest(c net.Conn) (*Request, error) {
 
 	splitRequestLine := strings.Split(requestLine, " ")
 	if len(splitRequestLine) < 3 {
-		return nil, fmt.Errorf("Invalid HTTP request")
+		return nil, fmt.Errorf("invalid HTTP request")
 	}
 
 	method := splitRequestLine[0]
@@ -43,10 +45,21 @@ func NewRequest(c net.Conn) (*Request, error) {
 		}
 
 		keyValue := strings.SplitN(line, ":", 2)
-		request.Headers[keyValue[0]] = keyValue[1]
+		request.Headers[keyValue[0]] = strings.Trim(keyValue[1], " ")
 	}
 
-	//todo: implement request body
+	content_length := request.Headers["Content-Length"]
+	if content_length != "" {
+		length, err := strconv.Atoi(content_length)
+		if err != nil {
+			return nil, fmt.Errorf("invalid Content-Length header")
+		}
+
+		body := make([]byte, length)
+		//todo: handle err
+		_, err = io.ReadFull(reader, body)
+		request.Body = body
+	}
 
 	return request, nil
 }

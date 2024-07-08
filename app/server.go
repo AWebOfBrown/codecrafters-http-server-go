@@ -31,8 +31,7 @@ func main() {
 			req, _ := NewRequest(conn)
 			res := NewResponse(conn)
 			router(req, res)
-			serializedResponse, _ := res.Serialize()
-			conn.Write(serializedResponse)
+			res.Send()
 		}(conn)
 	}
 }
