@@ -33,6 +33,16 @@ type RequestError struct {
 func NewRequest(c net.Conn) (*Request, *RequestError) {
 	reader := bufio.NewReader(c)
 
+	_, err := reader.Peek(1)
+
+	if err == io.EOF {
+		return nil, &RequestError{
+			Code:    NoRequestLine,
+			Message: "Empty request line",
+			Err:     fmt.Errorf("empty request line"),
+		}
+	}
+
 	requestLine, _ := reader.ReadString('\n')
 	requestLine = strings.TrimSpace(requestLine)
 

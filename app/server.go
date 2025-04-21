@@ -39,8 +39,7 @@ func main() {
 					var noRequestError *RequestError
 					req, noRequestError := NewRequest(conn)
 					if noRequestError != nil {
-						if errors.As(err, noRequestError) {
-							fmt.Printf("No req, doing nothins")
+						if errors.As(err, noRequestError) && noRequestError.Code == NoRequestLine {
 							break
 						} else {
 							r := NewResponse(conn)
