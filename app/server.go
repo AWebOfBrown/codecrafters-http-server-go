@@ -1,10 +1,12 @@
 package main
 
 import (
+	"errors"
 	"flag"
 	"fmt"
 	"net"
 	"os"
+	"time"
 )
 
 var dir string
@@ -27,12 +29,34 @@ func main() {
 			os.Exit(1)
 		}
 		go func(conn net.Conn) {
-			defer conn.Close()
-			req, _ := NewRequest(conn)
-			res := NewResponse(conn)
-			middleware_handler := NewMiddlewareStack(req, res)
-			middleware_handler.Use(response_sender, compression_middleware, router)
-			middleware_handler.Run()
+			defaultCloseTimer := time.NewTimer(time.Second * 15)
+			for {
+				select {
+				case <-defaultCloseTimer.C:
+					conn.Close()
+					return
+				default:
+					var noRequestError *RequestError
+					req, noRequestError := NewRequest(conn)
+					if noRequestError != nil {
+						if errors.As(err, noRequestError) {
+							fmt.Printf("No req, doing nothins")
+							break
+						} else {
+							r := NewResponse(conn)
+							r.Status = 400
+							r.Message = "Bad Request"
+							r.Send()
+							break
+						}
+					}
+					res := NewResponse(conn)
+					middleware_handler := NewMiddlewareStack(req, res)
+					middleware_handler.Use(response_sender, compression_middleware, router)
+					middleware_handler.Run()
+					defaultCloseTimer.Reset(time.Second * 15)
+				}
+			}
 		}(conn)
 	}
 }

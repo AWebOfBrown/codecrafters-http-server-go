@@ -16,15 +16,42 @@ type Request struct {
 	Path    string
 }
 
-func NewRequest(c net.Conn) (*Request, error) {
+type RequestErrorCode string
+
+const (
+	NoRequestLine        RequestErrorCode = "NO_REQUEST_LINE"
+	InvalidRequestLine   RequestErrorCode = "INVALID_REQUEST_LINE"
+	InvalidContentLength RequestErrorCode = "INVALID_CONTENT_LENGTH"
+)
+
+type RequestError struct {
+	Code    RequestErrorCode
+	Message string
+	Err     error
+}
+
+func NewRequest(c net.Conn) (*Request, *RequestError) {
 	reader := bufio.NewReader(c)
 
 	requestLine, _ := reader.ReadString('\n')
 	requestLine = strings.TrimSpace(requestLine)
 
 	splitRequestLine := strings.Split(requestLine, " ")
+
+	if len(splitRequestLine) == 0 {
+		return nil, &RequestError{
+			Code:    NoRequestLine,
+			Message: "Empty request line",
+			Err:     fmt.Errorf("empty request line"),
+		}
+	}
+
 	if len(splitRequestLine) < 3 {
-		return nil, fmt.Errorf("invalid HTTP request")
+		return nil, &RequestError{
+			Code:    InvalidRequestLine,
+			Message: "Invalid request line",
+			Err:     fmt.Errorf("invalid request line"),
+		}
 	}
 
 	method := splitRequestLine[0]
@@ -52,7 +79,11 @@ func NewRequest(c net.Conn) (*Request, error) {
 	if content_length != "" {
 		length, err := strconv.Atoi(content_length)
 		if err != nil {
-			return nil, fmt.Errorf("invalid Content-Length header")
+			return nil, &RequestError{
+				Code:    InvalidContentLength,
+				Message: "Invalid Content-Length header",
+				Err:     fmt.Errorf("invalid Content-Length header"),
+			}
 		}
 
 		body := make([]byte, length)
