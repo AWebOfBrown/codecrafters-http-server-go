@@ -53,12 +53,11 @@ func main() {
 					middleware_handler := NewMiddlewareStack(req, res)
 					middleware_handler.Use(response_sender, compression_middleware, router)
 					middleware_handler.Run()
-					if req.Headers["Connection"] == "close" {
+					if res.Headers["Connection"] == "close" {
 						conn.Close()
 					} else {
 						defaultCloseTimer.Reset(time.Second * 15)
 					}
-
 				}
 			}
 		}(conn)
